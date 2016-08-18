@@ -141,7 +141,7 @@ class Auth
 	     * @param string $hash
 	     * @return boolean
 	     */
-	     private function sessionIsValid($hash) {
+	     private function sessionValide($hash) {
 	     	$sql = 'SELECT username, expiredate, ip FROM ".PREFIX."sessions WHERE hash=:hash';
 	     	$session = $this->db->select($sql, array(':hash' => $hash));
 	     	$count = count($session);

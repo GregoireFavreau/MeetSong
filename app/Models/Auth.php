@@ -101,7 +101,7 @@ class Auth
 	   */
 	   public function etatConnex() {
 	   	$auth_session = Cookie::get('auth_session');
-	   	return ($auth_session != '' & $this->sessionIsValid($auth_session));
+	   	return ($auth_session != '' & $this->sessionValide($auth_session));
 	   }
 	   
 	   /*
@@ -159,8 +159,79 @@ class Auth
 	     			$this->logActivity($username, 'AUTH_CHECKSESSION', "");
 	     			return false
 	     		} else {
-	     			//TODO LIST
+	     			$expiredate = strtotime($db_expiredate);
+	     			$currentdate = strtotime(date('Y-m-d H:i:s'));
+	     			if ($currentdate > $expiredate) {
+	     				$this->db->delete(PREFIX.'sessions', array('username' => $username));
+	     				Cookie::destroy('auth_session', $hash);
+	     				$this->logActivity($username, 'AUTH_CHECKSESSION', "");
+	     			} else {
+	     				return true;
+	     			}
 	     		}
 	     	}
+	 }
+	 
+	 /*
+	  * Vérification de l'adresse IP
+	  * @param string $ip
+	  * @return int $attempt_count
+	  */
+	  private function getAttempt($ip) {
+	  	$attempt_count = $this->db->select('SELECT count FROM ".PREFIX".attempts WHERE ip=:ip', array(':ip' => $ip));
+	  	$count = count($attempt_count);
+	  	
+	  	if ($count == 0) {
+	  		$attempt_count[0] new \stdClass();
+	  		$attempt_count[0]->count = 0;
+	  	}
+	  	return $attempt_count;
+	  }
+	  
+	  /*
+	   * Ajout 
+	   * @param string $ip
+	   */
+	   private function addAttempt($ip) {
+	   	$query_attempt = $this->db->select('SELECT count FROM ".PREFIX."attemps WHERE ip=:ip', array(':ip' => $ip));
+	   	$count = count($query_attempt);
+	   	$attempt_expiredate = date('Y-m-d H:i:s', strtotime(SECURITY_DURATION));
+	   	if ($count == 0) {
+	   		$attempt_count = 1;
+	   		$this->db->insert(PREFIX.'attempts', array('ip' => $îp, 'count' => $attempt_count, 'expiredate' => $attempt_expiredate));
+	   	} else {
+	   		$attempt_count = intval($query_attempt[0]->count) +1;
+	   		$this->db->update(PREFIX.'attempts', array('count' => $attempt_copunt, 'expiredate' => $attempt_expiredate), array('ip' => $ip));
+	   	}
+	   }
+	   
+	   /*
+	    * 
+	    *
+	    */
+	    private function expireAttempt() {
+	    	$query_attempts = $this->db->select('SELECT ip, expiredate FROM ".PREFIX."attempts');
+	    	$count = count($query_attempts);
+	    	$curr_time = strtotime(date('Y-m-d H:i:s'));
+	    	if ($count != 0) {
+	    		foreach ($query_attempts as $attempt) {
+	    			$attempt_expiredate = strtotime($attempt->expiredate);
+	    			if ($attempt_expiredate <= $curr_time) {
+	    				$where = array('ip' => $attempt->ip);
+	    				$this->db->delete("".PREFIX.'attempts', $where);
+	    			}
+	    		}
+	    	}
+	    }
+	    
+	    /*
+	     * Création d'une nouvelle session et d'un cookie
+	     * @param string $username
+	     */
+	     private function nouvelleSession($username) {
+	     	$hash = md5(microtime());
+	     	$queryUid = $this->-db->select('SELECT id FROM ".PREFIX."users WHERE username=:username', array(':username' => $username));
+	     	$uid = $queryUid[0]->id;
+	     	$this->db->delete
 	     }
 }

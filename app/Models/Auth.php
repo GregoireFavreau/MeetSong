@@ -53,7 +53,7 @@ class Auth
 	 				$this->erreurmsg[] = $this->lang['login_password_short'];
 	 				return false;
 	 			} else {
-	 				
+	 				//TODO LIST
 	 			}
 	 		}
 	 	}

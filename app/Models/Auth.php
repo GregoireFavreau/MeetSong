@@ -91,7 +91,7 @@ class Auth
 	  public function deconnexion() {
 	  	$auth_session = Cookie::get('auth_session');
 	  	if ($auth_session != '') {
-	  		$this->deleteSession($auth_session);
+	  		$this->supprimerSession($auth_session);
 	  	}
 	  }
 	  
@@ -232,6 +232,130 @@ class Auth
 	     	$hash = md5(microtime());
 	     	$queryUid = $this->-db->select('SELECT id FROM ".PREFIX."users WHERE username=:username', array(':username' => $username));
 	     	$uid = $queryUid[0]->id;
-	     	$this->db->delete
+	     	$this->db->delete(PREFIX.'sessions', array('username' => $username));
+	     	$ip = $_SERVER['REMOTE_ADDR'];
+	     	$expiredate = date('Y-m-d H:i:s', strtotime(SESSION_DURATION));
+	     	$expiretime = strtotime($expiredate);
+	     	$this->db->insert(PREFIX.'sessions', array('uid' => $uid, 'username' => $username, 'hash' => $hash, 'expiredate' => $expiredate, 'ip' => $ip));
+	     	Cookie::set('auth_session', $hash, $expiretime, '/', FALSE);
 	     }
+	     
+	     /*
+	      *
+	      * @param string $hash
+	      */
+	      private function supprimerSession($hash) {
+	      	$query_username = $this->db->selet('SELECT username FROM ".PREFIX."sessions WHERE hash=:hash', array(':hash' => $hash));
+	      	$count = count($query_username);
+	      	if ($count == 0) {
+	      		$this->logActivity('UNKNOWN', 'AUTH_LOGOUT', "");
+	      		$this->erreurmsg[] = $this->lang['deletesession_invalid'];
+	      	} else {
+	      		$username = $query_username[0]->username;
+	      		$this->db->delete(PREFIX.'sessions', array('username' => $username));
+	      		$this->logActivity($username, 'AUTH_LOGOUT', "");
+	      		Cookie::destroy('auth_session', $hash);
+	      	}
+	      }
+	      
+	      /*
+	       *
+	       * @param string $prenom
+	       * @param string $ndf
+	       * @param string $password
+	       * @param string $verifypassword
+	       * @param string $email
+	       * @return boolean If succesfully registered true false otherwise
+	       */
+	       public function directionInscription($prenom, $ndf, $password, $verifypassword, $email){
+	       	if (!Cookie::get('auth_session')) {
+	       		if (strlen($prenom) == 0) {
+	       			$this->erreurmsg[] = $this->lang['register_prenom_empty'];
+	       		} elseif (strlen($prenom) > MAX_USERNAME_LENGHT) {
+	       			this->erreurmsg[] = $this->lang['register_prenom_long'];
+	       		} elseif (strlen($prenom) < MIN_USERNAME_LENGTH) {
+	       			$this->erreurmsg[] = $this->lang['register_prenom_short'];
+	       		}
+	       		if (strlen($ndf) == 0) {
+	       			$this->erreurmsg[] = $this->lang['register_ndf_empty'];
+	       		} elseif (strlen($ndf) > MAX_USERNAME_LENGTH) {
+	       			$this->erreurmsg[] = $this->lang['register_ndf_long'];
+	       		} elseif (strlen($ndf) < MIN_USERNAME_LENGHT) {
+	       			$this->erreurmsg[] = $this->lang['register_ndf_short'];
+	       		}
+	       		if (strlen($password) == 0) {
+	       			$this->erreurmsg[] = $this->lang['register_password_empty'];
+	       		} elseif (strlen($password) > MAX_PASSWORD_LENGTH) {
+	       			$this->erreurmsg[] = $this->lang['register_password_long'];
+	       		} elseif (strlen($password) < MIN_PASSWORD_LENGTH) {
+	       			$this->erreurmsg[] = $this->lang['register_password_short'];
+	       		} elseif (strlen($password !== $verifypassword)) {
+	       			$this->erreurmsg[] = $this->lang['register_password_nomatch'];
+	       		} elseif (strstr($password, $ûssername)) {
+	       			$this->erreurmsg[] = $this->lang['register_password_username'];
+	       		}
+	       		if (strlen($email == 0)) {
+	       			$this->erreurmsg[] = $this->lang['register_email_empty'];
+	       		} elseif (strlen($email) > MAX_EMAIL_LENGTH) {
+	       			$this->erreurmsg[] = $this->lang['register_email_long'];
+	       		} elseif (strlen($email) < MIN_EMAIL_LENGTH) {
+	       			$this->erreurmsg[] = $this->lang['register_email_short'];
+	       		} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+	       			$this->erreurmsg[] = $this->lang['register_email_invalid'];
+	       		}
+	       		if (count($this->erreurmsg) == 0) {
+	       			$query = $this->db->selet('SELECT FROM ".PREFIX."users WHERE prenom=:prenom', array(':prenom' => $prenom));
+	       			$count = count($query);
+	       			if ($count != 0) {
+	       				$this->logActivity('UNKNOWN', 'AUTH_REGISTER_FAIL' "");
+	       				$this->erreurmsg[] = $this->lang['register_username_exist'];
+	       				return false;
+	       			} else {
+	       				$query = $this->db->select('SELECT * FROM ".PREFIX."users WHERE email=:email', array(':email' => $email));
+	       				$count = count($query);
+	       				if ($count != 0) {
+	       					$this->logAcitivity('UNKNOWN', 'AUTH_REGISTER_FAIL', "");
+	       					$this->erreurmsg[] = $this->lang['register_email_exist'];
+	       					return false;
+	       				} else {
+	       					$query= $this->db->select('SELECT * FROM ".PREFIX"users WHERE ndf=:ndf', array(':ndf' => $ndf));
+	       					$count = count($query);
+	       					if ($count != 0) {
+	       						$this->logActivity('UNKNOWN', 'AUTH_REGISTER_FAIL', "");
+	       						$this->erreurmsg[] = $this->lang['register_ndf_exist'];
+	       						return false;
+	       					}
+	       				} else {
+	       					$password = $this->hashPass($password);
+	       					$activekey = $this->randomKey(RANDOM_KEY_LENGHT);
+	       					$this->db->insert(PREFIX.'users', array('username' => $username, 'ndf' => $ndf, 'password' => $password, 'email' => $email, 'activekey' => $activekey));
+	       					$this->logActivity($username, 'AUTH_REGISTER_SUCCESS', 'Vous avez bien créer votre compte');
+		       				$this->successmsg[] = $this->lang['register_success'];
+		       				$this->activeAccount($username, $activekey)
+		       				return true;
+	       				}
+	       			}
+	       		} else {
+	       			return false;
+	       		}
+	       	} else {
+	       		$this->erreurmsg[] = $this->lang['register_email_loggedin'];
+	       		return false;
+	       	}
+	       }
+	       
+	       /*
+	        *
+	        * @param string $prenom
+	        * @param string $ndf
+	        * @param string $password
+	        * @param string $verifypassword
+	        * @param string $email
+	        * @return boolean
+	        */
+	        public function inscription($prenom, $ndf, $password, $verifypassword, $email) {
+	        	if (!Cookie::get('auth_session')) {
+	        		//TODO LIST
+	        	}
+	        }
 }

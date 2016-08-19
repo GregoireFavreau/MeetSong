@@ -13,7 +13,7 @@ class Auth
 	public $lang;
 	
 	public function __construct() {
-		new \Helpers\Auth\Setup();
+		new \App\Models\Configuration();
 		$this->lang = include 'Lang.php';
 		$this->db = Database::get();
 		$this->expireAttempt();

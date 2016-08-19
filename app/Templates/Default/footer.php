@@ -1,7 +1,10 @@
 <?php
 /**
- * Default Footer.
+ * Sample layout
  */
+ use Helpers\Assets;
+ use Helpers\Url;
+ use Helpers\Hooks;
 
 ?>
 </div>
@@ -26,7 +29,7 @@
 <?php
 Assets::js([
 	'https://code.jquery.com/jquery-1.12.4.min.js',
-    template_url('dist/js/bootstrap.min.js', 'Default'),
+        template_url('dist/js/bootstrap.min.js', 'Default'),
 ]);
 
 echo $js; // Place to pass data / plugable hook zone

@@ -11,6 +11,14 @@
 /** Define static routes. */
 
 // The default Routing
+Route::any('', 'Controllers\Main@index');
+
+Route::any('login', 'Controllers\Main@authenticate');
+Route::any('logout', 'Controllers\Main@logout');
+Route::any('secured', 'Controllers\Main@secured');
+
+Route::error('Core\Error@index');
+
 Route::get('/',       'App\Controllers\Welcome@index');
 Route::get('subpage', 'App\Controllers\Welcome@subPage');
 

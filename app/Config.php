@@ -2,14 +2,37 @@
 /**
  * Constants
  *
- * @author Virgil-Adrian Teaca - virgil@giulianaeassociati.com
- * @version 3.0
+ * @author Grégoire Favreau - mohinette@hotmail.fr
+ * @version 1.0
  */
 
 /**
- * PREFER to be used in Database calls or storing Session data, default is 'nova_'
+ * Configuration de MeetSong
  */
-define('PREFIX', 'nova_');
+ define('URL', 'http://localhost/MeetSong');
+ define('PATH', '/');
+ define('LANGUAGE', 'fr');
+ define('TITRE', 'MeetSong');
+ define('CLE', '');
+ 
+ /**
+  * Configuration de la base de données
+  */
+define('TYPE', 'mysql');
+define('HOTE', 'localhost');
+define('PSEUDO', 'meetsong');
+define('MDP', '');
+define('NOM', 'root');
+define('PREFIX', 'meetsong_');
+
+/**
+ * Configuration des sessions
+ */
+ define('SESSION_PREFIX', 'meetsong_');
+
+/**
+ * Configuration pour les authentifications
+ */
 
 /**
  * Setup the Config API Mode.

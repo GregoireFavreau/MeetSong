@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Helpers\Database,
-    Helpers\Auth\Cookie;
+    App\Models\Cookie;
 
 class Auth
 {

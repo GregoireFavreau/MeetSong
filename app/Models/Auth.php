@@ -712,8 +712,160 @@ class Auth
 	              				return true;
 	              			}
 	              		} else {
-	              			//TODO LIST
+	              			if (strlen($key) == 0) {
+	              				$this->erreurmsg[] = $this->lang['resetpass_key_empty'];
+	              			} elseif (strlen($key) < RANDOM_KEY_LENGTH) {
+	              				$this->erreurmsg[] = $this->lang['resetpass_key_short'];
+	              			} elseif (strlen($key) > RANDOM_KEY_LENGTH) {
+	              				$this->erreurmsg[] = $this->lang['resetpass_key_long'];
+	              			}
+	              			if (strlen($newpass) == 0) {
+	              				$this->erreurmsg[] = $this->lang['resetpass_newpass_empty'];
+	              			} elseif (strlen($newpass) > MAX_PASSWORD_LENGTH) {
+	              				$this->erreurmsg[] = $this->lang['resetpass_newpass_long'];
+	              			} elseif (strlen($newpass) < MIN_PASSWORD_LENGTH) {
+	              				$this->erreurmsg[] = $this->lang['resetpass_newpass_short'];
+	              			} elseif (strstr($newpass, $prenom)) {
+	              				$this->erreurmsg[] = $this->lang['resetpass_newpass_prenom'];
+	              			} elseif ($newpass !== $verifynewpass) {
+	              				$this->erreurmsg[] = $this->lang['resetpass_newpass_nomatch'];
+	              			}
+	              			if (count($this->erreurmsg) == 0) {
+	              				$query = $this->db->select('SELECT resetkey FROM ".PREFIX."users WHERE prenom=:prenom', array(':prenom', => $prenom));
+	              				$count = count($query);
+	              				if ($count == 0) {
+	              					$this->erreurmsg[] = $this->lang['resetpass_prenom_incorrect'];
+	              					$attcount[0]->count = $attcount[0]->count + 1;
+	              					$remaincount = (int) MAX_ATTEMPTS - $attcount[0]->count;
+	              					$this->logActivity('UNKNOWN', 'AUTH_RESETPASS_FAIL', "Prénom incorrect ({$prenom})");
+	              					$this->erreurmsg[] = sprintf($this->lang['resetpass_attempts_remaining'], $remaincount);
+	              					$this->addAttempt($_SERVER['REMOTE_ADDR']);
+	              					return false;
+	              				} else {
+	              					$db_key = $query[0]->resetkey;
+	              					if ($key == $db_key) {
+	              						$newpass = $this->hashpass($newpass);
+	              						$resetkey = '0';
+	              						$this->db->update(PREFIX.'users', array('password' => $newpass, 'resetkey' => $resetkey), array('prenom' => $prenom));
+	              						$this->logActivity($prenom, 'AUTH_RESETPASS_SUCCESS', "Changement du mot de passe - changement de la clé");
+	              						$this->successmsg[] = $this->lang['resetpass_success'];
+	              						return true;
+	              					} else {
+	              						$this->erreurmsg[] = $this->lang['resetpass_key_incorrect'];
+	              						$attcount[0]->count = $attcount[0]->count + 1;
+	              						$remaincount = (int) MAX_ATTEMPTS - $attcount[0]->count;
+	              						$this->logActivity($prenom, 'AUTH_RESETPASS_FAIL', "Clée incorrect (DB: {$db_key} / Given: {$key} )");
+	              						$this->erreurmsg[] = sprintf($this->lang['resetpass_attempts_remaining'], $remaincount);
+	              						$this->addAttempt($_SERVER['REMOTE_ADDR']);
+	              						return false;
+	              					}
+	              				}
+	              			} else {
+	              				return false;
+	              			}
 	              		}
 	              	}
 	              }
+	              
+	              /*
+	               * Voir si la nouvelle clé est correct
+	               * @param string $prenom
+	               * @param string $key
+	               * @return boolean
+	               */
+	               function checkResetKey($prenom, $key) {
+	               	$attcount = $this->getAttempt($_SERVER['REMOTE_ADDR']);
+	               	if ($attcount[0]->count >= MAX_ATTEMPTS) {
+	               		$this->erreurmsg[] = $this->lang['resetpass_lockedout'];
+	               		$this->erreurmsg[] = sprintf($this->lang['resetpass_wait'], WAIT_TME);
+	               		return false;
+	               	} else {
+	               		if (strlen($prenom) == 0) {
+	               			return false;
+	               		} elseif (strlen($prenom) > MAX_USERNAME_LENGTH) {
+	               			return false;
+	               		} elseif (strlen($prenom) < MIN_USERNAME_LENGTH) {
+	               			return false;
+	               		} elseif (strlen($key) == 0) {
+	               			return false;
+	               		} elseif (strlen($key) < RANDOM_KEY_LENGTH) {
+	               			return false;
+	               		} elseif (strlen($key) > RANDOM_KEY_LENGTH) {
+	               			return false;
+	               		} else {
+	               			$query = $this->db->select('SELECT resetkey FROM ".PREFIX."users WHERE prenom=:prenom', array(':prenom' => $prenom));
+	               			$count = count($query);
+	               			if ($count == 0) {
+	               				$this->logActivity('UNKNOWN', 'AUTH_CHECKRESETKEY_FAIL', "Le prénom n'existe pas ({$prenom})");
+	               				$this->addAttempt($_SERVER['REMOTE_ADDR']);
+	               				$this->erreurmsg[] = $this->lang['checkresetkey_prenom_incorrect'];
+	               				$attcount[0]->count = $attcount[0]->count + 1;
+	               				$remaincount = (int) MAX_ATTEMPTS - $attcount[0]->count;
+	               				$this->erreurmsg[] = sprintf($this->lang['checkresetkey_attempts_remaining'], $remaincount);
+	               				return false;
+	               			} else {
+	               				$db_key = $query[0]->resetkey;
+	               				if ($key == $db_key) {
+	               					return true;
+	               				} else {
+	               					$this->logActivity($prenom, 'AUTH_CHECKRESETKEY_FAIL', "La clée utilisée est différente que celle dans la db (Db: {$db_key} / Given: {$key} )");
+	               					$this->addAttempt($_SERVER['REMOTE_ADDR']);
+	               					$this->erreurmsg[] = $this->lang['checkresetkey_key_incorrect'];
+	               					$attcount[0]->count = $attcount[0]->count + 1;
+	               					$remaincount = (int) MAX_ATTEMPTS - $attcount[0]->count;
+	               					$this->erreurmsg[] = sprintf($this->lang['checkresetkey_attempts_remaining'], $remaincount);
+	               					return false;
+	               				}
+	               			}
+	               		}
+	               	}
+	               }
+	               
+	               /*
+	                * Suppression du compte.
+	                * @param string $prenom
+	                * @param string $password
+	                * @return boolean
+	                */
+	                function supprimerCompte($prenom, $password) {
+	                	if (strlen($prenom) == 0) {
+	                		$this->erreurmsg[] = $this->lang['deleteaccount_prenom_empty'];
+	                	} elseif (strlen($prenom) > MAX_USERNAME_LENGTH) {
+	                		$this->erreurmsg[] = $this->lang['deleteaccount_prenom_long'];
+	                	} elseif (strlen($prenom) < MIN_USERNAME_LENGTH) {
+	                		$this->erreurmsg[] = $this->lang['deleteaccount_prenom_short'];
+	                	}
+	                	if (strlen($password) == 0) {
+	                		$this->erreurmsg[] = $this->lang['deleteaccount_password_empty'];
+	                	} elseif (strlen($password) > MAX_PASSWORD_LENGTH) {
+	                		$this->erreurmsg[] = $this->lang['deleteaccount_password_long'];
+	                	} elseif (strlen($password) < MIN_PASSWORD_LENGTH) {
+	                		$this->erreurmsg[] = $this->lang['deleteaccount_password_short'];
+	                	}
+	                	if (count($this->erreurmsg) == 0) {
+	                		$query = $this->db->select('SELECT password FROM ".PREFIX."users WHERE prenom=:prenom', array(':prenom' => $prenom));
+	                		$count = count($query);
+	                		if ($count == 0) {
+	                			$this->logActivity('UNKNOWN', 'AUTH_DELETEACCOUNT_FAIL', "Le prénom est incorrect ({$prenom})");
+	                			$this->erreurmsg[] = $this->lang['deleteaccount_prenom_incorrect'];
+	                			return false;
+	                		} else {
+	                			$db_password = $query[0]->password;
+	                			$verify_password = \Helpers\Password::verify($password, $db_password);
+	                			if ($verify_password) {
+	                				$this->db->delete(PREFIX.'users', array('prenom' => $prenom));
+	                				$this->db->delete(PREFIX.'sessions', array('prenom' => $prenom));
+	                				$this->logActivity($prenom, 'AUTH_DELETEACCOUNT_SUCCESS', "Compte supprimé - Sessions supprimées");
+	                				$this->successmsg[] = $this->lang['deleteaccount_success'];
+	                				return true;
+	                			} else {
+	                				$this->logActivity($prenom, 'AUTH_DELETEACCOUNT_FAIL', "Mot de passe incorrect (DB: {$db_password} / Given: {$password} )");
+	                				$this->erreurmsg[] = $this->lang['deleteaccount_password_incorrect'];
+	                				return false;
+	                			}
+	                		}
+	                	} else {
+	                		return false;
+	                	}
+	                }
 }

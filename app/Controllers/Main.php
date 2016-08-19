@@ -21,8 +21,29 @@ class Main extends Controller {
   }
   
   public function secured() {
-    if ($this->auth->isLogged()) {
+    if ($this->auth->etatConnex()) {
       echo "all ok you are secured";
+    }
+  }
+  
+  public function authenticate() {
+    $prenom = Request::post('prenom');
+    $password = Request::post('password');
+    $reponse = array();
+    if ($this->auth->connexion($prenom, $password)) {
+      if ($this->auth->erreurmsg) {
+        $reponse['status'] = 'already';
+        $reponse['message'] = $this->auth->erreurmsg[0];
+        echo json_encode($response);
+      } else {
+        $reponse['status'] = 'success';
+        $reponse['message'] = $this->auth->successmsg[0];
+        echo json_encode($response);
+      }
+    } else {
+      $response['status'] = 'fail';
+      $response['message'] = $this->auth->erreurmsg[0];
+      echo json_encode($response);
     }
   }
 }

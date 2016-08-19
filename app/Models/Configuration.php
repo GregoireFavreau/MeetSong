@@ -6,4 +6,4 @@
  * @author Grégoire Favreau <mohinette@hotmail.fr>
  */
  
- namespace App\Auth;
+ namespace App\Models;

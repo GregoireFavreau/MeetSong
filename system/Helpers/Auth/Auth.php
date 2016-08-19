@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Models;
+namespace Helpers\Auth;
 
 use Helpers\Database,
-    App\Models\Cookie;
+    Helpers\Auth\Cookie;
 
 class Auth
 {
@@ -13,7 +13,7 @@ class Auth
 	public $lang;
 	
 	public function __construct() {
-		new \App\Models\Configuration();
+		new \Helpers\Auth\Configuration();
 		$this->lang = include 'Lang.php';
 		$this->db = Database::get();
 		$this->expireAttempt();

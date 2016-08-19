@@ -14,66 +14,18 @@ use Core\Config;
  * The Application configuration.
  */
 Config::set('app', array(
-    /**
-     * Debug Mode
-     */
-    'debug' => (ENVIRONMENT == 'development'), // When enabled the actual PHP errors will be shown.
-
-    /**
-     * The Website URL.
-     */
-    'url' => 'http://www.novaframework.dev/',
-
-    /**
-    * The Administrator's E-mail Address.
-    */
-    'email' => 'admin@novaframework.dev',
-
-    /**
-     * The Website Path.
-     */
-    'path' => '/',
-
-    /**
-     * Website Name.
-     */
-    'name' => 'Nova 3.0',
-
-    /**
-     * The default Template.
-     */
-    'template' => 'Default',
-
-    /**
-     * The Backend's Color Scheme.
-     */
+    'debug' => false,
+    'url' => URL,
+    'email' => EMAIL,
+    'path' => PATH,
+    'name' => TITRE,
+    'template' => 'MeetSong',
     'color_scheme' => 'blue',
-
-    /**
-     * The default locale that will be used by the translation.
-     */
-    'locale' => 'en',
-
-    /**
-     * The default Timezone for your website.
-     * http://www.php.net/manual/en/timezones.php
-     */
+    'locale' => LANGUAGE,
     'timezone' => 'Europe/London',
-
-    /**
-     * The Encryption Key.
-     * This tool can be used to generate key - http://jeffreybarke.net/tools/codeigniter-encryption-key-generator
-     */
-    'key' => 'SomeRandomStringThere_1234567890',
-
-    /**
-     *  Prevents the website from CSRF attacks.
-     */
+    'key' => CLE,
     'csrf' => true,
 
-    /**
-     * The registered Service Providers.
-     */
     'providers' => array(
         'Auth\AuthServiceProvider',
         'Cache\CacheServiceProvider',
@@ -94,20 +46,11 @@ Config::set('app', array(
         'Cron\CronServiceProvider',
     ),
 
-    /**
-     * The Service Providers Manifest path.
-     */
     'manifest' => STORAGE_PATH,
 
-    /**
-     * The registered Class Aliases.
-     */
     'aliases' => array(
-        // The Core.
         'Errors'        => 'Core\Error',
         'View'          => 'Core\View',
-
-        // The Helpers.
         'Mail'          => 'Helpers\Mailer',
         'Assets'        => 'Helpers\Assets',
         'Csrf'          => 'Helpers\Csrf',
@@ -126,15 +69,9 @@ Config::set('app', array(
         'SimpleCurl'    => 'Helpers\SimpleCurl',
         'TableBuilder'  => 'Helpers\TableBuilder',
         'Tags'          => 'Helpers\Tags',
-
-        // The Forensics Console.
         'Console'       => '\Forensics\Console',
-
-        // The Support Classes.
         'Arr'           => 'Support\Arr',
         'Str'           => 'Support\Str',
-
-        // The Support Facades.
         'App'           => 'Support\Facades\App',
         'Auth'          => 'Support\Facades\Auth',
         'Cache'         => 'Support\Facades\Cache',

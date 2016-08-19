@@ -1,0 +1,3 @@
+<?php
+
+namespace Helpers\Auth;

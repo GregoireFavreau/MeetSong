@@ -6,7 +6,7 @@
  * @author Grégoire Favreau <mohinette@hotmail.fr>
  */
  
- namespace App\Models;
+ namespace Helpers\Auth;
  
  class Configuration {
   
